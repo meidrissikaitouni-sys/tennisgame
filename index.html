@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis Champions</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SCREEN 1: TITLE
+============================================================ -->
+<div id="screen-title" class="screen active">
+  <div class="title-bg"></div>
+  <div class="title-lightning"></div>
+
+  <div class="game-logo">
+    <div class="logo-sub">⚡ Présente ⚡</div>
+    <div class="logo-main">Tennis<br>Champions</div>
+    <div class="logo-year">◆ EDITION 2025 ◆</div>
+  </div>
+
+  <div class="menu-buttons">
+    <button class="btn-menu gold" onclick="startMode('cpu')">
+      🤖 &nbsp; JOUER CONTRE CPU
+    </button>
+    <button class="btn-menu blue" onclick="startMode('local')">
+      👥 &nbsp; JEU LOCAL (2 joueurs)
+    </button>
+    <button class="btn-menu red" onclick="showLobby()">
+      🌐 &nbsp; JEU EN LIGNE
+    </button>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 2: CHARACTER SELECT
+============================================================ -->
+<div id="screen-select" class="screen">
+  <div class="select-header">
+    <div class="select-title">⚔ Choisissez vos Champions ⚔</div>
+    <div class="select-subtitle" id="select-subtitle">Cliquer pour JOUEUR ACTIF &nbsp;|&nbsp; V pour basculer P1/P2</div>
+  </div>
+
+  <div class="select-players-info">
+    <div class="select-p1-label" id="p1-select-label">◀ JOUEUR 1 — Choisir</div>
+    <div class="select-p2-label" id="p2-select-label">Choisir — JOUEUR 2 ▶</div>
+  </div>
+
+  <div class="characters-grid" id="characters-grid">
+    <!-- Rempli dynamiquement -->
+  </div>
+
+  <div class="char-detail" id="char-detail">
+    <!-- Panel P1 -->
+    <div class="detail-panel p1" id="detail-p1">
+      <div style="color:#00BFFF;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;margin-bottom:16px;">JOUEUR 1</div>
+      <div style="color:#444;font-size:14px;">Aucun joueur sélectionné</div>
+    </div>
+
+    <!-- VS + Fight -->
+    <div class="vs-center">
+      <div class="vs-text">VS</div>
+
+      <div style="text-align:center;margin-bottom:8px;">
+        <div style="font-family:'Orbitron',monospace;font-size:9px;color:#666;letter-spacing:3px;margin-bottom:8px;">TERRAIN</div>
+        <div class="court-select">
+          <button class="court-btn hard active" onclick="selectCourt('hard',this)">HARD</button>
+          <button class="court-btn clay" onclick="selectCourt('clay',this)">CLAY</button>
+          <button class="court-btn grass" onclick="selectCourt('grass',this)">GRASS</button>
+        </div>
+      </div>
+
+      <div id="difficulty-section" style="text-align:center;margin-bottom:8px;">
+        <div style="font-family:'Orbitron',monospace;font-size:9px;color:#666;letter-spacing:3px;margin-bottom:6px;">DIFFICULTÉ CPU</div>
+        <div class="difficulty-select">
+          <button class="diff-btn easy"   onclick="selectDiff('easy',this)">Facile</button>
+          <button class="diff-btn medium active" onclick="selectDiff('medium',this)">Moyen</button>
+          <button class="diff-btn hard"   onclick="selectDiff('hard',this)">Difficile</button>
+          <button class="diff-btn pro"    onclick="selectDiff('pro',this)">PRO</button>
+        </div>
+      </div>
+
+      <button class="btn-fight" id="btn-fight" onclick="startFight()" disabled>
+        ⚡ COMBAT ⚡
+      </button>
+      <button class="btn-back" onclick="showScreen('screen-title')">← Retour</button>
+    </div>
+
+    <!-- Panel P2 -->
+    <div class="detail-panel p2" id="detail-p2">
+      <div style="color:#FF6B35;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;margin-bottom:16px;">JOUEUR 2 / CPU</div>
+      <div style="color:#444;font-size:14px;">Aucun joueur sélectionné</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 3: ONLINE LOBBY
+============================================================ -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-container">
+    <div class="lobby-title">🌐 ONLINE</div>
+    <div class="lobby-subtitle">Jouez avec vos amis via un code</div>
+
+    <div class="lobby-tabs">
+      <button class="lobby-tab active" onclick="switchLobbyTab('create')">CRÉER UN LOBBY</button>
+      <button class="lobby-tab" onclick="switchLobbyTab('join')">REJOINDRE</button>
+    </div>
+
+    <!-- CREATE TAB -->
+    <div class="lobby-panel active" id="lobby-create">
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        Partagez ce code avec votre ami pour commencer la partie.
+      </p>
+      <button class="btn-menu gold" style="width:100%;" onclick="createOnlineLobby()">
+        ⚡ CRÉER MON LOBBY
+      </button>
+      <div class="lobby-code-display" id="lobby-code-display" style="display:none;">
+        <div class="code-label">VOTRE CODE DE LOBBY</div>
+        <div class="code-value" id="lobby-code-value">------</div>
+        <div class="code-waiting">En attente d'un adversaire...</div>
+      </div>
+      <div class="lobby-status" id="create-status"></div>
+    </div>
+
+    <!-- JOIN TAB -->
+    <div class="lobby-panel" id="lobby-join">
+      <p style="font-size:13px;color:#888;margin-bottom:16px;">
+        Entrez le code partagé par votre ami pour rejoindre sa partie.
+      </p>
+      <div class="code-input-wrapper">
+        <input class="code-input" id="join-code-input" maxlength="6"
+               placeholder="XXXXXX" oninput="this.value=this.value.toUpperCase()">
+        <button class="btn-join" onclick="joinOnlineLobby()">REJOINDRE</button>
+      </div>
+      <div class="lobby-status" id="join-status"></div>
+    </div>
+
+    <button class="btn-back" onclick="showScreen('screen-title')">← Retour</button>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 4: GAME
+============================================================ -->
+<div id="screen-game" class="screen">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="game-ui-overlay">
+    <!-- Pause overlay -->
+    <div class="pause-overlay" id="pause-overlay">
+      <div class="pause-title">⏸ PAUSE</div>
+      <button class="btn-menu gold" onclick="resumeGame()">▶ REPRENDRE</button>
+      <button class="btn-menu red" onclick="quitGame()">✖ QUITTER</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SCREEN 5: GAME OVER
+============================================================ -->
+<div id="screen-gameover" class="screen">
+  <div class="winner-title">CHAMPION</div>
+  <div class="winner-name" id="winner-name">---</div>
+  <div class="winner-trophy">🏆</div>
+  <div class="final-score" id="final-score">0 - 0</div>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn-menu gold" onclick="playAgain()">🔄 REJOUER</button>
+    <button class="btn-menu blue" onclick="showScreen('screen-title')">🏠 MENU</button>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
+<script src="characters.js"></script>
+<script src="physics.js"></script>
+<script src="renderer.js"></script>
+<script src="ai.js"></script>
+<script src="game.js"></script>
+<script src="network.js"></script>
+
+<script>
+// ============================================================
+// ÉTAT GLOBAL
+// ============================================================
+let currentMode = 'cpu';
+let selectedP1 = null;
+let selectedP2 = null;
+let selectedCourt = 'hard';
+let selectedDiff = 'medium';
+let currentGame = null;
+let networkManager = null;
+let isPaused = false;
+let activeSelectPlayer = 'p1';
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startMode(mode) {
+  currentMode = mode;
+  selectedP1 = null;
+  selectedP2 = null;
+  activeSelectPlayer = 'p1';
+
+  // Show/hide difficulty for CPU
+  const diffSection = document.getElementById('difficulty-section');
+  diffSection.style.display = mode === 'cpu' ? 'block' : 'none';
+
+  buildCharacterGrid();
+  updateSelectionUI();
+  showScreen('screen-select');
+}
+
+function showLobby() {
+  showScreen('screen-lobby');
+}
+
+// ============================================================
+// CHARACTER GRID
+// ============================================================
+function buildCharacterGrid() {
+  const grid = document.getElementById('characters-grid');
+  grid.innerHTML = '';
+
+  CHARACTERS.forEach((char, i) => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.dataset.id = char.id;
+    card.dataset.index = i;
+
+    // Portrait background
+    const portraitBg = document.createElement('div');
+    portraitBg.className = 'char-portrait-bg';
+    portraitBg.style.background = `radial-gradient(circle, ${char.color}40 0%, transparent 70%)`;
+
+    // Portrait canvas
+    const portraitDiv = document.createElement('div');
+    portraitDiv.className = 'char-portrait';
+    portraitDiv.style.background = `linear-gradient(180deg, ${char.color}22 0%, ${char.secondary}11 100%)`;
+
+    // Draw character on mini canvas
+    const miniCanvas = document.createElement('canvas');
+    miniCanvas.width = 80;
+    miniCanvas.height = 100;
+    drawMiniCharacter(miniCanvas, char);
+    portraitDiv.appendChild(portraitBg);
+    portraitDiv.appendChild(miniCanvas);
+
+    const countryEl = document.createElement('div');
+    countryEl.className = 'char-country';
+    countryEl.textContent = char.country;
+    portraitDiv.appendChild(countryEl);
+
+    // Info
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'char-info';
+    infoDiv.innerHTML = `
+      <div class="char-name" style="color:${char.color}">${char.name}</div>
+      <div class="char-title">${char.title}</div>
+      <div class="char-stats-mini">
+        ${buildMiniStats(char)}
+      </div>
+    `;
+
+    card.appendChild(portraitDiv);
+    card.appendChild(infoDiv);
+
+    card.addEventListener('click', (e) => {
+      const targetPlayer = e.shiftKey
+        ? (activeSelectPlayer === 'p1' ? 'p2' : 'p1')
+        : activeSelectPlayer;
+      selectCharacter(i, targetPlayer);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function updateSelectionUI() {
+  const subtitle = document.getElementById('select-subtitle');
+  if (subtitle) {
+    const active = activeSelectPlayer === 'p1' ? 'P1' : 'P2';
+    subtitle.textContent = `Cliquer pour ${active} | V pour basculer P1/P2`;
+  }
+
+  const p1Label = document.getElementById('p1-select-label');
+  const p2Label = document.getElementById('p2-select-label');
+  if (p1Label && p2Label) {
+    p1Label.style.textShadow = activeSelectPlayer === 'p1' ? '0 0 8px rgba(0,191,255,0.9)' : 'none';
+    p2Label.style.textShadow = activeSelectPlayer === 'p2' ? '0 0 8px rgba(255,107,53,0.9)' : 'none';
+  }
+}
+
+function buildMiniStats(char) {
+  const stats = [
+    { key: 'power', label: 'PWR', color: '#FF4444' },
+    { key: 'speed', label: 'SPD', color: '#00FFFF' },
+    { key: 'spin',  label: 'SPN', color: '#FFD700' },
+    { key: 'serve', label: 'SRV', color: '#FF69B4' }
+  ];
+  return stats.map(s => `
+    <div class="stat-mini">
+      <span style="color:${s.color};width:22px;">${s.label}</span>
+      <div class="stat-bar-mini">
+        <div class="stat-fill" style="width:${char.stats[s.key]}%;background:${s.color}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function drawMiniCharacter(canvas, char) {
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2;
+  const cy = canvas.height * 0.6;
+
+  // Body
+  const grad = ctx.createLinearGradient(cx - 15, cy - 35, cx + 15, cy + 10);
+  grad.addColorStop(0, char.color);
+  grad.addColorStop(1, char.secondary);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(cx - 12, cy - 30, 24, 28, 4);
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle = '#FDBCB4';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 42, 14, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = '#2C1810';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 46, 12, Math.PI, 0);
+  ctx.fill();
+
+  // Headband
+  ctx.fillStyle = char.secondary;
+  ctx.fillRect(cx - 13, cy - 54, 26, 5);
+
+  // Eyes
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(cx - 7, cy - 43, 5, 4);
+  ctx.fillRect(cx + 2, cy - 43, 5, 4);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(cx - 6, cy - 42, 3, 3);
+  ctx.fillRect(cx + 3, cy - 42, 3, 3);
+
+  // Legs
+  ctx.fillStyle = char.color;
+  ctx.fillRect(cx - 11, cy - 4, 10, 22);
+  ctx.fillRect(cx + 1, cy - 4, 10, 22);
+
+  // Shoes
+  ctx.fillStyle = '#222';
+  ctx.fillRect(cx - 13, cy + 17, 13, 6);
+  ctx.fillRect(cx, cy + 17, 13, 6);
+
+  // Racket
+  ctx.save();
+  ctx.translate(cx + 12, cy - 25);
+  ctx.rotate(0.4);
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(0, 0, 5, 16);
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 2;
+  ctx.fillStyle = 'rgba(180,180,180,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(8, -8, 8, 11, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Glow effect
+  ctx.shadowColor = char.color;
+  ctx.shadowBlur = 15;
+  ctx.strokeStyle = char.color + '60';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 15, 36, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+// ============================================================
+// CHARACTER SELECTION
+// ============================================================
+function selectCharacter(index, player) {
+  const char = CHARACTERS[index];
+
+  if (player === 'p1') {
+    selectedP1 = char;
+    document.getElementById('p1-select-label').textContent = `◀ P1: ${char.name}`;
+    updateDetailPanel('detail-p1', char, '00BFFF', 'JOUEUR 1');
+  } else {
+    selectedP2 = char;
+    document.getElementById('p2-select-label').textContent = `P2: ${char.name} ▶`;
+    updateDetailPanel('detail-p2', char, 'FF6B35', currentMode === 'cpu' ? 'CPU' : 'JOUEUR 2');
+  }
+
+  // Update card highlight
+  document.querySelectorAll('.char-card').forEach(card => {
+    card.classList.remove('selected-p1', 'selected-p2');
+  });
+  document.querySelectorAll('.char-card').forEach(card => {
+    if (selectedP1 && card.dataset.id === selectedP1.id) card.classList.add('selected-p1');
+    if (selectedP2 && card.dataset.id === selectedP2.id) card.classList.add('selected-p2');
+  });
+
+  // Enable fight button
+  const canFight = selectedP1 && (selectedP2 || currentMode === 'cpu');
+  document.getElementById('btn-fight').disabled = !canFight;
+}
+
+function updateDetailPanel(id, char, colorHex, role) {
+  const panel = document.getElementById(id);
+  const statsList = [
+    { key: 'power',     label: 'PUISSANCE',  color: '#FF4444' },
+    { key: 'speed',     label: 'VITESSE',    color: '#00FFFF' },
+    { key: 'spin',      label: 'EFFET',      color: '#FFD700' },
+    { key: 'serve',     label: 'SERVICE',    color: '#FF69B4' },
+    { key: 'endurance', label: 'ENDURANCE',  color: '#00FF88' },
+    { key: 'volley',    label: 'VOLÉE',      color: '#BA68C8' }
+  ];
+
+  panel.innerHTML = `
+    <div style="color:#${colorHex};font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;margin-bottom:10px;">${role}</div>
+    <div class="detail-char-name" style="color:${char.color}">${char.name} ${char.country}</div>
+    <div class="detail-bio">${char.bio}</div>
+    <div class="stats-grid">
+      ${statsList.map(s => `
+        <div class="stat-row">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-bar-full">
+            <div class="fill" style="width:${char.stats[s.key] || 75}%;background:${s.color}"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="special-info">
+      <div class="special-name">⚡ ${char.specialName}</div>
+      <div class="special-desc">${char.special}</div>
+    </div>
+    <div style="font-size:10px;color:#666;margin-top:8px;font-family:'Orbitron',monospace;letter-spacing:1px;">${char.playstyle}</div>
+  `;
+}
+
+// ============================================================
+// COURT & DIFFICULTY
+// ============================================================
+function selectCourt(type, btn) {
+  selectedCourt = type;
+  document.querySelectorAll('.court-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function selectDiff(diff, btn) {
+  selectedDiff = diff;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ============================================================
+// START FIGHT
+// ============================================================
+function startFight() {
+  if (!selectedP1) return;
+
+  let p2Char = selectedP2;
+
+  // For CPU, auto-select if no P2 chosen
+  if (currentMode === 'cpu' && !p2Char) {
+    const others = CHARACTERS.filter(c => c.id !== selectedP1.id);
+    p2Char = others[Math.floor(Math.random() * others.length)];
+    selectedP2 = p2Char;
+  }
+
+  if (!p2Char) return;
+
+  showScreen('screen-game');
+  initGame(selectedP1, p2Char);
+}
+
+function initGame(p1Char, p2Char) {
+  const canvas = document.getElementById('gameCanvas');
+
+  // Resize canvas to fill screen
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // Destroy previous game
+  if (currentGame) {
+    currentGame.stop();
+    currentGame = null;
+  }
+
+  currentGame = new TennisGame(canvas, p1Char, p2Char, currentMode, selectedDiff);
+  currentGame.setCourtType(selectedCourt);
+
+  // Online: attach network
+  if (currentMode === 'online' && networkManager) {
+    currentGame.network = networkManager;
+    networkManager.on('opponent_state', (msg) => {
+      currentGame.opponentState = msg.state;
+    });
+    networkManager.on('ball_update', (msg) => {
+      if (networkManager.role === 'guest') {
+        Object.assign(currentGame.ball, msg.ball);
+      }
+    });
+    networkManager.on('opponent_disconnected', () => {
+      alert('Adversaire déconnecté!');
+      quitGame();
+    });
+  }
+
+  currentGame.onGameOver = (winner, score) => {
+    showGameOver(winner, score, p1Char, p2Char);
+  };
+
+  // Pause on ESC
+  document.addEventListener('keydown', handleGameKeys);
+
+  currentGame.start();
+}
+
+function handleGameKeys(e) {
+  if (e.code === 'Escape') {
+    togglePause();
+  }
+}
+
+function togglePause() {
+  if (!currentGame) return;
+  isPaused = !isPaused;
+  const overlay = document.getElementById('pause-overlay');
+  overlay.classList.toggle('visible', isPaused);
+  if (isPaused) currentGame.pause();
+  else currentGame.resume();
+}
+
+function resumeGame() {
+  isPaused = false;
+  document.getElementById('pause-overlay').classList.remove('visible');
+  if (currentGame) currentGame.resume();
+}
+
+function quitGame() {
+  if (currentGame) { currentGame.stop(); currentGame = null; }
+  document.removeEventListener('keydown', handleGameKeys);
+  document.getElementById('pause-overlay').classList.remove('visible');
+  if (networkManager) { networkManager.disconnect(); networkManager = null; }
+  showScreen('screen-title');
+}
+
+// ============================================================
+// GAME OVER
+// ============================================================
+function showGameOver(winner, score, p1Char, p2Char) {
+  const winChar = winner === 'player1' ? p1Char : p2Char;
+  document.getElementById('winner-name').textContent = winChar.name;
+  document.getElementById('winner-name').style.color = winChar.color;
+  document.getElementById('final-score').textContent = `${score.sets1} - ${score.sets2}`;
+  showScreen('screen-gameover');
+}
+
+function playAgain() {
+  showScreen('screen-select');
+}
+
+// ============================================================
+// ONLINE LOBBY
+// ============================================================
+function switchLobbyTab(tab) {
+  document.querySelectorAll('.lobby-tab').forEach((t, i) => {
+    t.classList.toggle('active', (tab === 'create' && i === 0) || (tab === 'join' && i === 1));
+  });
+  document.querySelectorAll('.lobby-panel').forEach((p, i) => {
+    p.classList.toggle('active', (tab === 'create' && i === 0) || (tab === 'join' && i === 1));
+  });
+}
+
+async function createOnlineLobby() {
+  setLobbyStatus('create-status', 'info', 'Connexion au serveur...');
+
+  document.getElementById('lobby-code-display').style.display = 'none';
+
+  // Always have a default host character for online creation.
+  if (!selectedP1) selectedP1 = CHARACTERS[0];
+
+  try {
+    networkManager = new NetworkManager();
+    await networkManager.connect();
+
+    networkManager.on('lobby_created', (msg) => {
+      document.getElementById('lobby-code-display').style.display = 'block';
+      document.getElementById('lobby-code-value').textContent = msg.code;
+      setLobbyStatus('create-status', 'success', '✓ Lobby créé! En attente...');
+    });
+
+    networkManager.on('opponent_joined', (msg) => {
+      setLobbyStatus('create-status', 'success', '✓ Adversaire connecté! Lancement...');
+    });
+
+    networkManager.on('game_start', (msg) => {
+      const p2CharData = CHARACTERS.find(c => c.id === msg.guestCharacter) || CHARACTERS[1];
+      selectedP2 = p2CharData;
+      currentMode = 'online';
+      setTimeout(() => {
+        showScreen('screen-game');
+        initGame(selectedP1, selectedP2);
+      }, 500);
+    });
+
+    networkManager.createLobby(selectedP1);
+
+  } catch (err) {
+    setLobbyStatus('create-status', 'error', '❌ Impossible de se connecter au serveur. Lancez: npm start');
+    networkManager = null;
+  }
+}
+
+async function joinOnlineLobby() {
+  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  if (code.length !== 6) {
+    setLobbyStatus('join-status', 'error', '❌ Code invalide (6 caractères requis)');
+    return;
+  }
+
+  setLobbyStatus('join-status', 'info', 'Connexion...');
+
+  try {
+    networkManager = new NetworkManager();
+    await networkManager.connect();
+
+    networkManager.on('lobby_joined', (msg) => {
+      setLobbyStatus('join-status', 'success', `✓ Lobby rejoint! En attente du début...`);
+      const hostChar = CHARACTERS.find(c => c.id === msg.opponentCharacter) || CHARACTERS[0];
+      selectedP2 = selectedP1; // We are guest
+      selectedP1 = hostChar;
+    });
+
+    networkManager.on('error', (msg) => {
+      setLobbyStatus('join-status', 'error', `❌ ${msg.message}`);
+    });
+
+    networkManager.on('game_start', (msg) => {
+      const p1c = CHARACTERS.find(c => c.id === msg.hostCharacter) || CHARACTERS[0];
+      const p2c = CHARACTERS.find(c => c.id === msg.guestCharacter) || CHARACTERS[1];
+      currentMode = 'online';
+      setTimeout(() => {
+        showScreen('screen-game');
+        initGame(p1c, p2c);
+      }, 500);
+    });
+
+    if (!selectedP1) selectedP1 = CHARACTERS[1];
+    networkManager.joinLobby(code, selectedP1);
+
+  } catch (err) {
+    setLobbyStatus('join-status', 'error', '❌ Impossible de se connecter. Lancez: npm start');
+    networkManager = null;
+  }
+}
+
+function setLobbyStatus(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = `lobby-status ${type}`;
+  el.textContent = text;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyV' || e.repeat) return;
+  const selectScreen = document.getElementById('screen-select');
+  if (!selectScreen || !selectScreen.classList.contains('active')) return;
+
+  activeSelectPlayer = activeSelectPlayer === 'p1' ? 'p2' : 'p1';
+  updateSelectionUI();
+});
+
+// ============================================================
+// WINDOW RESIZE
+// ============================================================
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('gameCanvas');
+  if (currentGame && document.getElementById('screen-game').classList.contains('active')) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Recalculate court positions
+    currentGame.courtY = canvas.height - 140;
+    currentGame.courtRight = canvas.width - 40;
+    currentGame.netX = canvas.width / 2;
+    currentGame.renderer.width = canvas.width;
+    currentGame.renderer.height = canvas.height;
+  }
+});
+
+// Prevent context menu on canvas
+document.getElementById('gameCanvas')?.addEventListener('contextmenu', e => e.preventDefault());
+
+// ============================================================
+// INIT: Auto-select P1 default
+// ============================================================
+window.addEventListener('load', () => {
+  // Pre-select default P1
+  selectedP1 = CHARACTERS[0];
+  selectedP2 = CHARACTERS[3]; // Alcaraz as default CPU
+  updateSelectionUI();
+});
+</script>
+</body>
+</html>
